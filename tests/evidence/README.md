@@ -27,4 +27,4 @@ Evidence files contain outputs collected from the Debian lab.
   not delivery to an external paging or notification service.
 - The lab is a single nested-virtualization VM; it does not demonstrate
   multi-rack HA, physical fencing, or production-scale recovery.
-- GitHub push has not been performed.
+- Delivery status applies to a specific commit; verify the remote branch before treating this evidence as published.

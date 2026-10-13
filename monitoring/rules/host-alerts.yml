@@ -54,7 +54,10 @@ groups:
           description: "An inventory-declared VM is not in running state. Verify host/storage health before restarting it."
 
       - alert: VmExporterUnavailable
-        expr: up{job="virt-host-metrics"} == 0
+        expr: |
+          absent(node_textfile_mtime_seconds{file="virt-host.prom", job="node"})
+          or
+          (time() - node_textfile_mtime_seconds{file="virt-host.prom", job="node"} > 120)
         for: 2m
         labels:
           severity: warning
