@@ -1,0 +1,24 @@
+=== Date ===
+2026-10-13T15:31:16-04:00
+
+=== Prometheus configuration ===
+Checking /etc/prometheus/prometheus.yml
+  SUCCESS: 1 rule files found
+
+Checking /etc/prometheus/rules/host-alerts.yml
+  SUCCESS: 9 rules found
+
+
+=== Host alert rules ===
+Checking /etc/prometheus/rules/host-alerts.yml
+  SUCCESS: 9 rules found
+
+
+=== Alertmanager configuration ===
+Checking '/etc/prometheus/alertmanager.yml'  SUCCESS
+Found:
+ - global config
+ - route
+ - 0 inhibit rules
+ - 2 receivers
+ - 0 templates

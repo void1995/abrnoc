@@ -1,0 +1,125 @@
+
+PLAY [Prepare and monitor Debian KVM virtualization hosts] *********************
+
+TASK [Gathering Facts] *********************************************************
+ok: [localhost]
+
+TASK [virt_host : Refresh APT metadata when stale] *****************************
+ok: [localhost]
+
+TASK [virt_host : Install KVM, libvirt, security and monitoring dependencies] ***
+ok: [localhost]
+
+TASK [virt_host : Add declared administrators to virtualization groups] ********
+
+TASK [virt_host : Install SSH hardening drop-in] *******************************
+ok: [localhost]
+
+TASK [virt_host : Ensure persistent journal directory exists] ******************
+ok: [localhost]
+
+TASK [virt_host : Ensure journald drop-in directory exists] ********************
+ok: [localhost]
+
+TASK [virt_host : Configure persistent journald limits] ************************
+ok: [localhost]
+
+TASK [virt_host : Set virtualization host sysctl parameters] *******************
+ok: [localhost]
+
+TASK [virt_host : Enable and start chrony] *************************************
+ok: [localhost]
+
+TASK [virt_host : Enable and start libvirt daemon] *****************************
+ok: [localhost]
+
+TASK [virt_host : Query libvirt default network] *******************************
+ok: [localhost]
+
+TASK [virt_host : Enable autostart for default libvirt network when present] ***
+ok: [localhost]
+
+TASK [virt_host : Start default libvirt network if inactive] *******************
+skipping: [localhost]
+
+TASK [virt_host : Install dedicated nftables ruleset without flushing libvirt tables] ***
+skipping: [localhost]
+
+TASK [virt_host : Install firewall apply helper] *******************************
+skipping: [localhost]
+
+TASK [virt_host : Install dedicated firewall unit] *****************************
+skipping: [localhost]
+
+TASK [virt_host : Enable dedicated firewall service] ***************************
+skipping: [localhost]
+
+TASK [virt_host : Ensure Prometheus and systemd configuration directories exist] ***
+ok: [localhost] => (item=/etc/prometheus/rules)
+ok: [localhost] => (item=/etc/prometheus/blackbox)
+ok: [localhost] => (item=/etc/systemd/system/prometheus-node-exporter.service.d)
+ok: [localhost] => (item=/etc/systemd/system/prometheus-blackbox-exporter.service.d)
+ok: [localhost] => (item=/etc/systemd/system/virt-host-metrics.service.d)
+ok: [localhost] => (item=/etc/virt-host-exporter)
+
+TASK [virt_host : Ensure node-exporter textfile directory exists] **************
+ok: [localhost]
+
+TASK [virt_host : Configure node exporter] *************************************
+ok: [localhost]
+
+TASK [virt_host : Install libvirt textfile exporter] ***************************
+ok: [localhost]
+
+TASK [virt_host : Write expected VM inventory for the exporter] ****************
+ok: [localhost]
+
+TASK [virt_host : Install libvirt metrics exporter service and timer] **********
+ok: [localhost] => (item={'src': 'virt-host-metrics.service.j2', 'dest': '/etc/systemd/system/virt-host-metrics.service'})
+ok: [localhost] => (item={'src': 'virt-host-metrics.timer.j2', 'dest': '/etc/systemd/system/virt-host-metrics.timer'})
+
+TASK [virt_host : Configure Prometheus package arguments] **********************
+ok: [localhost]
+
+TASK [virt_host : Configure Alertmanager package arguments] ********************
+ok: [localhost]
+
+TASK [virt_host : Configure blackbox exporter arguments] ***********************
+ok: [localhost]
+
+TASK [virt_host : Grant blackbox exporter raw socket capability] ***************
+ok: [localhost]
+
+TASK [virt_host : Configure Prometheus scrape jobs and rules] ******************
+ok: [localhost]
+
+TASK [virt_host : Install host alert rules] ************************************
+ok: [localhost]
+
+TASK [virt_host : Install blackbox exporter configuration] *********************
+ok: [localhost]
+
+TASK [virt_host : Configure Alertmanager routing and optional webhook] *********
+ok: [localhost]
+
+TASK [virt_host : Reload systemd unit definitions before enabling monitoring services] ***
+ok: [localhost]
+
+TASK [virt_host : Validate Prometheus configuration] ***************************
+ok: [localhost]
+
+TASK [virt_host : Validate Prometheus alert rules] *****************************
+ok: [localhost]
+
+TASK [virt_host : Validate Alertmanager configuration] *************************
+ok: [localhost]
+
+TASK [virt_host : Enable and start monitoring services] ************************
+ok: [localhost] => (item=prometheus-node-exporter)
+ok: [localhost] => (item=virt-host-metrics.timer)
+ok: [localhost] => (item=prometheus-blackbox-exporter)
+ok: [localhost] => (item=prometheus-alertmanager)
+ok: [localhost] => (item=prometheus)
+
+PLAY RECAP *********************************************************************
+localhost                  : ok=31   changed=0    unreachable=0    failed=0    skipped=6    rescued=0    ignored=0

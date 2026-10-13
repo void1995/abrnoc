@@ -2,7 +2,7 @@
 
 ## Proposed design
 
-Use a minimum of **three independent racks / failure domains** with Ceph RBD for VM disks, and a separate three-member control/quorum plane. Each compute node runs Debian, KVM and libvirt; the management plane schedules guests only after quorum and fencing checks. The diagram is in `architecture.mmd`.
+Use a minimum of **three independent racks / failure domains** with Ceph RBD for VM disks, and a separate three-member control/quorum plane. Each compute node runs Debian, KVM and libvirt; the management plane schedules guests only after quorum and fencing checks. The editable source is `architecture.mmd`; the Mermaid diagram is rendered below.
 
 - Ceph: 3 MONs across distinct failure domains; OSD replicas placed across racks (`size=3`, `min_size=2`, `failure_domain=rack`) for VM pools. Acknowledge writes only under the configured quorum policy. Keep recovery/backfill throttled and reserve capacity.
 - Compute: at least 3 KVM hosts per cluster, with spare N+1 CPU/RAM capacity. Use a cluster manager/orchestrator for placement and controlled restart; do not let independent hosts start the same guest disk.
@@ -41,3 +41,54 @@ With 3 replicas, raw capacity overhead is roughly 3× before metadata, snapshots
 ## Lab limits
 
 The connected Debian 11.7 VM has 4 vCPU, 3.8 GiB RAM and a 19 GiB root disk. Nested KVM is exposed, but this is one VMware guest with no independent racks, storage nodes, BMC, or separate monitor quorum. The HA proposal is therefore documented, not claimed as a deployed or fault-injection-tested cluster.
+
+## Architecture diagram
+
+```mermaid
+flowchart LR
+  subgraph CP[Control plane — separate failure domains]
+    API[Scheduler / API]
+    PG[(PostgreSQL HA quorum)]
+    MDB[(MongoDB replica set)]
+    API --> PG
+    API --> MDB
+  end
+
+  subgraph R1[Rack / failure domain 1]
+    C1[KVM + libvirt host 1]
+    M1[Ceph MON 1]
+    O1[Ceph OSD replicas]
+  end
+  subgraph R2[Rack / failure domain 2]
+    C2[KVM + libvirt host 2]
+    M2[Ceph MON 2]
+    O2[Ceph OSD replicas]
+  end
+  subgraph R3[Rack / failure domain 3]
+    C3[KVM + libvirt host 3]
+    M3[Ceph MON 3]
+    O3[Ceph OSD replicas]
+  end
+
+  C1 <-->|RBD / replicated storage| O1
+  C1 <-->|RBD / replicated storage| O2
+  C1 <-->|RBD / replicated storage| O3
+  C2 <-->|RBD / replicated storage| O1
+  C2 <-->|RBD / replicated storage| O2
+  C2 <-->|RBD / replicated storage| O3
+  C3 <-->|RBD / replicated storage| O1
+  C3 <-->|RBD / replicated storage| O2
+  C3 <-->|RBD / replicated storage| O3
+  M1 <-->|MON quorum| M2
+  M2 <-->|MON quorum| M3
+  M3 <-->|MON quorum| M1
+
+  F[Fencing / watchdog / BMC] --> C1
+  F --> C2
+  F --> C3
+  B[Immutable off-site backups] -. separate failure domain .-> C1
+
+  API --> C1
+  API --> C2
+  API --> C3
+```
