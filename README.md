@@ -10,7 +10,7 @@ The connected lab is Debian 11.7 (`5.10.0-22-amd64`) inside VMware Workstation. 
 
 - `ansible/`: idempotent host role, inventory examples and repeatability helper.
 - `monitoring/`: Prometheus, Alertmanager, blackbox and alert-rule configuration, plus opt-in demo alerts.
-- `docs/`: HA architecture, first-15-minute incident response, Appendix A analysis, alert policy and trade-offs.
+- `docs/`: HA architecture with embedded Mermaid and rendered PNG, first-15-minute incident response, Appendix A analysis, alert policy and trade-offs.
 - `tests/`: idempotency and Alertmanager checks; `tests/evidence/` contains only outputs from tests actually run.
 
 ## Run from a control node
