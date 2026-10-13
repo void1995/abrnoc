@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+/usr/sbin/nft delete table inet virt_host_filter 2>/dev/null || true
+/usr/sbin/nft -f /etc/virt-host-nftables.conf

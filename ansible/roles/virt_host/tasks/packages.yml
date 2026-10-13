@@ -1,0 +1,12 @@
+---
+- name: Refresh APT metadata when stale
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install KVM, libvirt, security and monitoring dependencies
+  ansible.builtin.apt:
+    name: "{{ virt_host_required_packages + (virt_host_manage_monitoring_stack | bool | ternary(['prometheus', 'prometheus-alertmanager', 'prometheus-node-exporter', 'prometheus-blackbox-exporter'], [])) }}"
+    state: present
+    # Keep packages aligned with the installed Bullseye release in this lab; see docs/trade-offs.
+    default_release: "{{ ansible_distribution_release }}"

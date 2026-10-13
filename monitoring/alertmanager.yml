@@ -1,0 +1,26 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: business-hours
+  group_by: [alertname, instance, category]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - match:
+        severity: critical
+      receiver: on-call
+      group_wait: 10s
+      repeat_interval: 30m
+    - match:
+        severity: warning
+      receiver: business-hours
+      group_wait: 5m
+      repeat_interval: 8h
+
+receivers:
+  - name: on-call
+    # Add a secret-backed webhook / pager integration before production use.
+  - name: business-hours
+    # Add a secret-backed email/chat integration before production use.

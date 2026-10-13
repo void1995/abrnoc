@@ -1,0 +1,94 @@
+groups:
+  - name: virtualization-host
+    rules:
+      - alert: HostDiskLatencyHigh
+        expr: |
+          1000 * rate(node_disk_io_time_weighted_seconds_total{device=~"(nvme.*|sd[a-z]+)"}[5m])
+          / clamp_min(rate(node_disk_reads_completed_total{device=~"(nvme.*|sd[a-z]+)"}[5m]) + rate(node_disk_writes_completed_total{device=~"(nvme.*|sd[a-z]+)"}[5m]), 0.001) > 50
+        for: 5m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "High storage latency on {{ $labels.instance }}"
+          description: "Average weighted I/O time exceeds 50 ms for 5 minutes on {{ $labels.device }}. Check NVMe/SATA health, RAID and kernel logs."
+
+      - alert: RaidDegraded
+        expr: node_md_disks{state="failed"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Software RAID degraded on {{ $labels.instance }}"
+          description: "node_exporter mdstat collector reports failed member(s). Page on-call immediately; do not reboot before assessing redundancy and data risk."
+
+      - alert: HostLoadHigh
+        expr: node_load15 / count without (cpu, mode) (node_cpu_seconds_total{mode="idle"}) > 1.5
+        for: 15m
+        labels:
+          severity: warning
+          category: capacity
+        annotations:
+          summary: "Sustained host load"
+          description: "15-minute load is >1.5x logical CPU count for 15 minutes; investigate during business hours unless customers are affected."
+
+      - alert: HostMemoryPressure
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.10
+        for: 10m
+        labels:
+          severity: warning
+          category: capacity
+        annotations:
+          summary: "Host memory pressure"
+          description: "Available memory is below 10% for 10 minutes. Check VM overcommit, reclaim and OOM events. Escalate immediately if guest/customer impact starts."
+
+      - alert: ExpectedVmNotRunning
+        expr: virt_expected_domain_running == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: virtualization
+        annotations:
+          summary: "Expected VM is not running: {{ $labels.domain }}"
+          description: "An inventory-declared VM is not in running state. Verify host/storage health before restarting it."
+
+      - alert: VmExporterUnavailable
+        expr: up{job="virt-host-metrics"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          category: virtualization
+        annotations:
+          summary: "libvirt textfile exporter job unavailable"
+          description: "Check the exporter timer, virsh access, and node_exporter textfile collector."
+
+      - alert: NetworkInterfaceDrops
+        expr: sum by (instance, device) (rate(node_network_receive_drop_total{device!~"lo|virbr.*"}[5m]) + rate(node_network_transmit_drop_total{device!~"lo|virbr.*"}[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: network
+        annotations:
+          summary: "Sustained interface packet drops on {{ $labels.device }}"
+          description: "Host NIC drop counters exceed 10 packets/s for 5 minutes. Correlate with switch counters and customer impact; counters are not an end-to-end loss percentage."
+
+      - alert: NetworkProbeFailed
+        expr: probe_success == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: network
+        annotations:
+          summary: "Network reachability probe failed for {{ $labels.instance }}"
+          description: "Blackbox ICMP probe failed for 2 minutes. Confirm the target and correlate with interface counters; this detects reachability failure, not a precise packet-loss percentage."
+
+      - alert: NodeExporterDown
+        expr: up{job="node"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          category: monitoring
+        annotations:
+          summary: "Node exporter is unavailable"
+          description: "Host telemetry is missing. Investigate during business hours unless an independent probe or customer impact confirms a host outage."

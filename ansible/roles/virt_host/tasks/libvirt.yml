@@ -1,0 +1,24 @@
+---
+- name: Enable and start libvirt daemon
+  ansible.builtin.service:
+    name: libvirtd
+    enabled: true
+    state: started
+
+- name: Query libvirt default network
+  ansible.builtin.command: virsh net-info default
+  register: virt_default_net
+  changed_when: false
+  failed_when: false
+
+- name: Enable autostart for default libvirt network when present
+  ansible.builtin.command: virsh net-autostart default
+  changed_when: false
+  when: virt_default_net.rc == 0
+
+- name: Start default libvirt network if inactive
+  ansible.builtin.command: virsh net-start default
+  register: virt_net_start
+  changed_when: virt_net_start.rc == 0
+  failed_when: virt_net_start.rc != 0 and 'already active' not in (virt_net_start.stderr | lower)
+  when: "virt_default_net.rc == 0 and 'Active: no' in virt_default_net.stdout"

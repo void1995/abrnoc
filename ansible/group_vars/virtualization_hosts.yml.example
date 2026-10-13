@@ -1,0 +1,10 @@
+---
+# Copy to virtualization_hosts.yml and set only real, reachable targets.
+virt_host_expected_vms: []
+network_probe_targets: []
+# Set only after verifying an SSH key works in a second session.
+virt_host_ssh_password_authentication: true
+# Review management paths before enabling on an existing host.
+virt_host_enable_firewall: false
+# Keep secrets in Ansible Vault; never commit a real URL/token.
+alertmanager_webhook_url: ""

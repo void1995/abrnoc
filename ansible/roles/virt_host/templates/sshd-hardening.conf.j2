@@ -1,0 +1,11 @@
+# Managed by Ansible: virt_host role.
+PermitRootLogin no
+PermitEmptyPasswords no
+MaxAuthTries 4
+LoginGraceTime 30
+X11Forwarding no
+AllowTcpForwarding no
+PubkeyAuthentication yes
+PermitUserEnvironment no
+PasswordAuthentication {{ 'yes' if virt_host_ssh_password_authentication | bool else 'no' }}
+KbdInteractiveAuthentication no

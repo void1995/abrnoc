@@ -1,0 +1,22 @@
+#!/usr/sbin/nft -f
+# Managed table only. Never flush the global ruleset: libvirt owns separate dynamic rules.
+table inet virt_host_filter {
+  chain input {
+    type filter hook input priority filter - 5; policy drop;
+    iifname "lo" accept
+    ct state established,related accept
+    ip protocol icmp accept
+    ip6 nexthdr ipv6-icmp accept
+    udp sport 67 udp dport 68 accept
+    tcp dport {{ virt_host_ssh_port }} ct state new accept
+    # DHCP/DNS requests from libvirt's default NAT bridge only.
+    iifname "virbr0" udp dport { 53, 67 } accept
+    iifname "virbr0" tcp dport 53 accept
+  }
+  chain forward {
+    type filter hook forward priority filter - 5; policy accept;
+  }
+  chain output {
+    type filter hook output priority filter - 5; policy accept;
+  }
+}

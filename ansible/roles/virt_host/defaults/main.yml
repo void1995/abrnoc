@@ -1,0 +1,31 @@
+---
+virt_host_required_packages:
+  - openssh-server
+  - qemu-system-x86
+  - qemu-utils
+  - libvirt-daemon-system
+  - libvirt-clients
+  - virtinst
+  - bridge-utils
+  - nftables
+  - chrony
+  - sudo
+  - python3
+  - python3-apt
+  - python3-libvirt
+  - curl
+
+virt_host_ssh_port: 22
+# Keep password login until a key-only session has been verified; opt out explicitly for production.
+virt_host_ssh_password_authentication: true
+virt_host_enable_firewall: false
+virt_host_enable_monitoring: true
+virt_host_admin_users: []
+virt_host_expected_vms: []
+virt_host_textfile_dir: /var/lib/prometheus/node-exporter
+virt_host_exporter_listen_address: "127.0.0.1:9100"
+virt_host_prometheus_listen_address: "127.0.0.1:9090"
+virt_host_alertmanager_listen_address: "127.0.0.1:9093"
+network_probe_targets: []
+alertmanager_webhook_url: ""
+virt_host_manage_monitoring_stack: true

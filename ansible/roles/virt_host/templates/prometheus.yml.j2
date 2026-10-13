@@ -1,0 +1,42 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    environment: lab
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['127.0.0.1:9093']
+
+scrape_configs:
+  - job_name: node
+    static_configs:
+      - targets: ['127.0.0.1:9100']
+
+  - job_name: virt-host-metrics
+    static_configs:
+      - targets: ['127.0.0.1:9100']
+
+  - job_name: alertmanager
+    static_configs:
+      - targets: ['127.0.0.1:9093']
+
+{% if network_probe_targets | length > 0 %}
+  - job_name: blackbox
+    metrics_path: /probe
+    params:
+      module: [icmp]
+    static_configs:
+      - targets: {{ network_probe_targets | to_json }}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115
+{% endif %}

@@ -1,0 +1,34 @@
+---
+- name: Install dedicated nftables ruleset without flushing libvirt tables
+  ansible.builtin.template:
+    src: nftables.conf.j2
+    dest: /etc/virt-host-nftables.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Apply virt-host firewall rules
+
+- name: Install firewall apply helper
+  ansible.builtin.copy:
+    src: virt-host-nft-apply
+    dest: /usr/local/sbin/virt-host-nft-apply
+    owner: root
+    group: root
+    mode: '0750'
+  notify: Apply virt-host firewall rules
+
+- name: Install dedicated firewall unit
+  ansible.builtin.template:
+    src: virt-host-firewall.service.j2
+    dest: /etc/systemd/system/virt-host-firewall.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload systemd daemon
+
+- name: Enable dedicated firewall service
+  ansible.builtin.systemd:
+    name: virt-host-firewall.service
+    enabled: true
+    state: started
+    daemon_reload: true

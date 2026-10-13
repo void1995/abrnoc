@@ -1,0 +1,7 @@
+---
+- name: Prepare and monitor Debian KVM virtualization hosts
+  hosts: virtualization_hosts
+  become: true
+  gather_facts: true
+  roles:
+    - role: virt_host

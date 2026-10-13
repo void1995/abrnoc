@@ -1,0 +1,20 @@
+---
+- name: Install required packages
+  ansible.builtin.import_tasks: packages.yml
+
+- name: Configure users and SSH
+  ansible.builtin.import_tasks: security.yml
+
+- name: Configure time, kernel and persistent logging
+  ansible.builtin.import_tasks: system.yml
+
+- name: Configure KVM and libvirt
+  ansible.builtin.import_tasks: libvirt.yml
+
+- name: Configure firewall
+  ansible.builtin.import_tasks: firewall.yml
+  when: virt_host_enable_firewall | bool
+
+- name: Configure exporters and Prometheus alerting
+  ansible.builtin.import_tasks: monitoring.yml
+  when: virt_host_enable_monitoring | bool and virt_host_manage_monitoring_stack | bool

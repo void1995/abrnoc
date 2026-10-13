@@ -1,0 +1,164 @@
+---
+- name: Ensure Prometheus and systemd configuration directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /etc/prometheus/rules
+    - /etc/prometheus/blackbox
+    - /etc/systemd/system/prometheus-node-exporter.service.d
+    - /etc/systemd/system/prometheus-blackbox-exporter.service.d
+    - /etc/systemd/system/virt-host-metrics.service.d
+    - /etc/virt-host-exporter
+
+- name: Ensure node-exporter textfile directory exists
+  ansible.builtin.file:
+    path: "{{ virt_host_textfile_dir }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: Configure node exporter
+  ansible.builtin.template:
+    src: node-exporter-override.conf.j2
+    dest: /etc/systemd/system/prometheus-node-exporter.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart node exporter
+
+- name: Install libvirt textfile exporter
+  ansible.builtin.copy:
+    src: virt-host-metrics.py
+    dest: /usr/local/sbin/virt-host-metrics.py
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart libvirt metrics timer
+
+- name: Write expected VM inventory for the exporter
+  ansible.builtin.copy:
+    dest: /etc/virt-host-exporter/expected-vms.txt
+    content: "{{ virt_host_expected_vms | join('\n') }}{% if virt_host_expected_vms | length > 0 %}\n{% endif %}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart libvirt metrics timer
+
+- name: Install libvirt metrics exporter service and timer
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - { src: 'virt-host-metrics.service.j2', dest: '/etc/systemd/system/virt-host-metrics.service' }
+    - { src: 'virt-host-metrics.timer.j2', dest: '/etc/systemd/system/virt-host-metrics.timer' }
+  notify: Reload systemd daemon
+
+- name: Configure Prometheus package arguments
+  ansible.builtin.template:
+    src: prometheus-default.j2
+    dest: /etc/default/prometheus
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Prometheus
+
+- name: Configure Alertmanager package arguments
+  ansible.builtin.template:
+    src: alertmanager-default.j2
+    dest: /etc/default/prometheus-alertmanager
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Alertmanager
+
+- name: Configure blackbox exporter arguments
+  ansible.builtin.copy:
+    dest: /etc/default/prometheus-blackbox-exporter
+    content: |
+      ARGS="--config.file=/etc/prometheus/blackbox.yml --web.listen-address=127.0.0.1:9115"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart blackbox exporter
+
+- name: Grant blackbox exporter raw socket capability
+  ansible.builtin.template:
+    src: blackbox-override.conf.j2
+    dest: /etc/systemd/system/prometheus-blackbox-exporter.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart blackbox exporter
+
+- name: Configure Prometheus scrape jobs and rules
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: root
+    group: prometheus
+    mode: '0640'
+  notify: Restart Prometheus
+
+- name: Install host alert rules
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../monitoring/rules/host-alerts.yml"
+    dest: /etc/prometheus/rules/host-alerts.yml
+    owner: root
+    group: prometheus
+    mode: '0640'
+  notify: Restart Prometheus
+
+- name: Install blackbox exporter configuration
+  ansible.builtin.template:
+    src: blackbox.yml.j2
+    dest: /etc/prometheus/blackbox.yml
+    owner: root
+    group: prometheus
+    mode: '0640'
+  notify: Restart blackbox exporter
+
+- name: Configure Alertmanager routing and optional webhook
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: /etc/prometheus/alertmanager.yml
+    owner: root
+    group: prometheus
+    mode: '0640'
+  no_log: "{{ alertmanager_webhook_url | length > 0 }}"
+  notify: Restart Alertmanager
+
+- name: Reload systemd unit definitions before enabling monitoring services
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Validate Prometheus configuration
+  ansible.builtin.command: /usr/bin/promtool check config /etc/prometheus/prometheus.yml
+  changed_when: false
+
+- name: Validate Prometheus alert rules
+  ansible.builtin.command: /usr/bin/promtool check rules /etc/prometheus/rules/host-alerts.yml
+  changed_when: false
+
+- name: Validate Alertmanager configuration
+  ansible.builtin.command: /usr/bin/amtool check-config /etc/prometheus/alertmanager.yml
+  changed_when: false
+
+- name: Enable and start monitoring services
+  ansible.builtin.service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - prometheus-node-exporter
+    - virt-host-metrics.timer
+    - prometheus-blackbox-exporter
+    - prometheus-alertmanager
+    - prometheus

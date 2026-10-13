@@ -1,0 +1,15 @@
+[virtualization_hosts]
+virt-host-01 ansible_host=192.0.2.10 ansible_user=virtops ansible_python_interpreter=/usr/bin/python3
+
+[virtualization_hosts:vars]
+# Keep secrets out of this file. Use --ask-pass / --ask-become-pass or Ansible Vault.
+virt_host_ssh_port=22
+virt_host_ssh_password_authentication=true
+# Firewall is opt-in on an existing host; review management access before enabling.
+virt_host_enable_firewall=false
+virt_host_enable_monitoring=true
+# Set these lists in group_vars/virtualization_hosts.yml when needed.
+virt_host_expected_vms=
+network_probe_targets=
+# Optional Alertmanager webhook; store real values in Ansible Vault, not here.
+alertmanager_webhook_url=

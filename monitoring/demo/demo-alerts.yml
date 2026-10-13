@@ -1,0 +1,21 @@
+groups:
+  - name: demo-only
+    rules:
+      - alert: DemoStorageFailure
+        expr: vector(1)
+        labels:
+          severity: critical
+          category: storage
+          demo: "true"
+        annotations:
+          summary: "DEMO: simulated storage failure"
+          description: "Synthetic test alert only. Remove the demo rule after validation."
+      - alert: DemoVmFailure
+        expr: vector(1)
+        labels:
+          severity: critical
+          category: virtualization
+          demo: "true"
+        annotations:
+          summary: "DEMO: simulated VM failure"
+          description: "Synthetic test alert only. Remove the demo rule after validation."

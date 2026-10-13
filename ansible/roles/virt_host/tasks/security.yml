@@ -1,0 +1,22 @@
+---
+- name: Add declared administrators to virtualization groups
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ item.groups | default(['sudo', 'kvm', 'libvirt']) | join(',') }}"
+    append: true
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    state: present
+  loop: "{{ virt_host_admin_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Install SSH hardening drop-in
+  ansible.builtin.template:
+    src: sshd-hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/60-virt-host-hardening.conf
+    owner: root
+    group: root
+    mode: '0644'
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: Validate and reload SSH
+  when: ansible_service_mgr == 'systemd'

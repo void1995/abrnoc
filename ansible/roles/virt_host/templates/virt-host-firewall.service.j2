@@ -1,0 +1,15 @@
+[Unit]
+Description=Conservative input firewall for AbrNOC KVM host
+Before=libvirtd.service
+After=network-pre.target
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/virt-host-nft-apply
+ExecReload=/usr/local/sbin/virt-host-nft-apply
+ExecStop=/bin/sh -c '/usr/sbin/nft delete table inet virt_host_filter 2>/dev/null || true'
+
+[Install]
+WantedBy=multi-user.target

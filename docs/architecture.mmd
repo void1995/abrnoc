@@ -1,0 +1,46 @@
+flowchart LR
+  subgraph CP[Control plane — separate failure domains]
+    API[Scheduler / API]
+    PG[(PostgreSQL HA quorum)]
+    MDB[(MongoDB replica set)]
+    API --> PG
+    API --> MDB
+  end
+
+  subgraph R1[Rack / failure domain 1]
+    C1[KVM + libvirt host 1]
+    M1[Ceph MON 1]
+    O1[Ceph OSD replicas]
+  end
+  subgraph R2[Rack / failure domain 2]
+    C2[KVM + libvirt host 2]
+    M2[Ceph MON 2]
+    O2[Ceph OSD replicas]
+  end
+  subgraph R3[Rack / failure domain 3]
+    C3[KVM + libvirt host 3]
+    M3[Ceph MON 3]
+    O3[Ceph OSD replicas]
+  end
+
+  C1 <-->|RBD / replicated storage| O1
+  C1 <-->|RBD / replicated storage| O2
+  C1 <-->|RBD / replicated storage| O3
+  C2 <-->|RBD / replicated storage| O1
+  C2 <-->|RBD / replicated storage| O2
+  C2 <-->|RBD / replicated storage| O3
+  C3 <-->|RBD / replicated storage| O1
+  C3 <-->|RBD / replicated storage| O2
+  C3 <-->|RBD / replicated storage| O3
+  M1 <-->|MON quorum| M2
+  M2 <-->|MON quorum| M3
+  M3 <-->|MON quorum| M1
+
+  F[Fencing / watchdog / BMC] --> C1
+  F --> C2
+  F --> C3
+  B[Immutable off-site backups] -. separate failure domain .-> C1
+
+  API --> C1
+  API --> C2
+  API --> C3

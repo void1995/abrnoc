@@ -1,0 +1,19 @@
+# Local inventory and private configuration
+ansible/inventory.ini
+ansible/inventory-local.ini
+ansible/group_vars/virtualization_hosts.yml
+.env
+.env.*
+!.env.example
+
+# Test logs; retain sanitized evidence
+tests/evidence/*.txt
+!tests/evidence/README.md
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Private keys and certificates
+*.pem
+*.key
